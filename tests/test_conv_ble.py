@@ -120,12 +120,106 @@ def test_10987():
     # https://github.com/AlexxIT/XiaomiGateway3/issues/809
     p = device.decode(
         "mibeacon",
-        {
-            "did": "blt.3.1bc9srn94eg00",
-            "eid": 18952,
-            "edata": "00008041",
-            "pdid": 10987,
-            "seq": 72,
-        },
+        {"did": DID, "eid": 18952, "edata": "00008041", "pdid": 10987, "seq": 72},
     )
     assert p == {"motion": True, "illuminance": 16.0}
+
+    # new format
+    # https://github.com/AlexxIT/XiaomiGateway3/issues/956
+    p = device.decode_miot(
+        [
+            {
+                "did": DID,
+                "siid": 2,
+                "eiid": 1008,
+                "tid": 240,
+                "arguments": [{"piid": 1005, "value": 23.000000}],
+            }
+        ]
+    )
+    assert p == {"motion": True, "illuminance": 23.0}
+
+
+def test_7184():
+    device = XDevice(BLE, 7184, DID, MAC)
+    assert device.info.name == "Linptech Wireless Button"
+    device.setup_converters()
+
+    # old format
+    # https://github.com/AlexxIT/XiaomiGateway3/pull/844
+    p = device.decode(
+        "mibeacon",
+        {"did": DID, "eid": 19980, "edata": "01", "pdid": 7184},
+    )
+    assert p == {"action": "single"}
+
+    # new format
+    # https://github.com/AlexxIT/XiaomiGateway3/issues/867
+    # https://github.com/AlexxIT/XiaomiGateway3/issues/826
+    p = device.decode_miot(
+        [
+            {
+                "did": DID,
+                "siid": 3,
+                "eiid": 1012,
+                "tid": 117,
+                "arguments": [{"piid": 1, "value": 1}],
+            }
+        ]
+    )
+    assert p == {"action": "single"}
+
+    p = device.decode_miot(
+        [
+            {
+                "did": DID,
+                "siid": 3,
+                "eiid": 1012,
+                "tid": 117,
+                "arguments": [{"piid": 1, "value": 15}],
+            }
+        ]
+    )
+    assert p == {"action": "double"}
+
+
+def test_6473():
+    device = XDevice(BLE, 6473, DID, MAC)
+    assert device.info.name == "Xiaomi Double Button"
+    device.setup_converters()
+
+    # new format https://github.com/AlexxIT/XiaomiGateway3/issues/965
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1012, "arguments": [{"piid": 1, "value": 1}]}]
+    )
+    assert p == {"action": "button_1_single"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1012, "arguments": [{"piid": 1, "value": 2}]}]
+    )
+    assert p == {"action": "button_2_single"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1013, "arguments": [{"piid": 1, "value": 1}]}]
+    )
+    assert p == {"action": "button_1_double"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1013, "arguments": [{"piid": 1, "value": 2}]}]
+    )
+    assert p == {"action": "button_2_double"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1014, "arguments": [{"piid": 1, "value": 1}]}]
+    )
+    assert p == {"action": "button_1_hold"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1014, "arguments": [{"piid": 1, "value": 2}]}]
+    )
+    assert p == {"action": "button_2_hold"}
+
+    p = device.decode_miot(
+        [{"did": DID, "siid": 3, "eiid": 1012, "arguments": [{"piid": 1, "value": 3}]}]
+    )
+    assert p == {"action": "button_both_single"}
